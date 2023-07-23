@@ -68,10 +68,10 @@ with mlflow.start_run() as run:
 
     run_id = run.info.run_id
     model_uri = f"runs:/{run_id}/model"
-    registered_model = mlflow.register_model(model_uri=model_uri, name=model_name)
+    mlflow.register_model(model_uri=model_uri, name=model_name)
 
-    latest_version_info = registered_model.get_latest_versions()[0]
-    model_version = latest_version_info.version
+    latest_version_info = client.get_latest_versions(name=model_name, stages=['None'])
+    model_version = int(latest_version_info[0].version)
 
     new_stage = "Production"
     client.transition_model_version_stage(
