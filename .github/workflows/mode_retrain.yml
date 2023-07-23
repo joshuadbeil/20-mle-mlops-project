@@ -16,9 +16,9 @@ jobs:
           REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "$GOOGLE_APPLICATION_CREDENTIALS" | base64 --decode | jq > credentials.json
-          pip install -r requirements.txt
+          pip install -r src/action_requirements.txt
           echo "Pulling data from GCS..."
-          dvc remote modify --local myremote \
+          dvc remote modify --local gcsremote \
                     credentialpath './credentials.json'
           dvc pull
           echo "Training model..."
