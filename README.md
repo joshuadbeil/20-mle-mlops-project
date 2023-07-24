@@ -13,3 +13,13 @@ source .venv/bin/activate
 pip install -U pip
 pip install -r requirements.txt
 ```
+
+## Local Services
+
+API:        http://localhost:8080
+
+Prometheus: http://localhost:9090
+
+Grafana:    http://localhost:3000
+
+Evidently:  http://localhost:8085
