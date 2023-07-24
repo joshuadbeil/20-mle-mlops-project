@@ -5,7 +5,7 @@ import numpy as np
 class LrTaxiTransformer(BaseEstimator, TransformerMixin):
     def __init__(self):
         self.features = ["PULocationID", "DOLocationID", "trip_distance", "passenger_count", "fare_amount", "total_amount"]
-        self.target = 'trip_duration_minutes'
+        self.target = 'duration'
 
     def fit(self, X, y=None):
         return self
@@ -20,10 +20,10 @@ class LrTaxiTransformer(BaseEstimator, TransformerMixin):
         return X, y
 
     def calculate_and_filter_trip_duration_in_minutes(self, data):
-        data["trip_duration_minutes"] = (
+        data["duration"] = (
             data["lpep_dropoff_datetime"] - data["lpep_pickup_datetime"]
             ).dt.total_seconds() / 60
-        data = data[(data["trip_duration_minutes"] >= 1) & (data["trip_duration_minutes"] <= 60)]
+        data = data[(data["duration"] >= 1) & (data["duration"] <= 60)]
         return data
     
     def limit_passenger_count(self, data):
