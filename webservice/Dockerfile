@@ -5,11 +5,11 @@ FROM python:3.10-slim-buster
 WORKDIR /app
 
 # Set up environment
-COPY requirements.txt /app/
+COPY . /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # copy the rest of the files
-COPY . /app/
+# COPY . /app/
 
 # MLFLOW Server
 ENV MLFLOW_TRACKING_URI="http://34.159.7.88:5000"
