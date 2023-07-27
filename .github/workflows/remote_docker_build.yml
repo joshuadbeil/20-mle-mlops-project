@@ -29,7 +29,7 @@ jobs:
       name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v1
       with:
-        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+        credentials_json: ${{ secrets.GOOGLE_APPLICATION_CREDENTIALS }}
         token_format: access_token
 
     - name: Docker login
@@ -47,6 +47,6 @@ jobs:
       with:
         context: ./${{ matrix.context }}
         push: true
-        tags: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/${{ matrix.image }}:latest
+        tags: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.DOCKER_REPOSITORY }}/${{ matrix.image }}:latest
         no-cache: true
         platforms: linux/amd64
