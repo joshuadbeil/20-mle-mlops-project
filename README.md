@@ -144,7 +144,7 @@ jobs:
         token_format: access_token
 
     - name: Docker login
-      uses: docker/login-action@v1
+      uses: docker/login-action@v2
       with:
         registry: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev
         username: oauth2accesstoken
@@ -162,77 +162,8 @@ jobs:
         platforms: linux/amd64
         no-cache: true
 ```
-- All images, three different versions
-```yml
-name: Docker build and push to Artifact Registry
+- All images
 
-on:
-  push:
-    branches:
-      - deployment
-
-jobs:
-  login-build-push:
-    name: Docker login, build, and push
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - id: auth
-      name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@v1
-      with:
-        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-        token_format: access_token
-
-    - name: Docker login
-      uses: docker/login-action@v1
-      with:
-        registry: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev
-        username: oauth2accesstoken
-        password: ${{ steps.auth.outputs.access_token }}
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Build and push webservice Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: ./webservice
-        push: true
-        tags: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/ml-service:latest
-        no-cache: true
-        platforms: linux/amd64
-
-    - name: Build and push evidently_service Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: ./evidently_service
-        push: true
-        tags: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/evidently_service:latest
-        no-cache: true
-        platforms: linux/amd64
-
-    - name: Build and push prometheus Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: ./prometheus
-        push: true
-        tags: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/prometheus:latest
-        no-cache: true
-        platforms: linux/amd64
-
-    - name: Build and push grafana Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: ./grafana
-        push: true
-        tags: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/grafana:latest
-        no-cache: true
-        platforms: linux/amd64
-```
 ```yml
 name: Docker build and push to Artifact Registry
 
@@ -269,7 +200,7 @@ jobs:
         token_format: access_token
 
     - name: Docker login
-      uses: docker/login-action@v1
+      uses: docker/login-action@v2
       with:
         registry: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev
         username: oauth2accesstoken
@@ -286,56 +217,6 @@ jobs:
         tags: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/${{ matrix.image }}:latest
         no-cache: true
         platforms: linux/amd64
-
 ```
 
-```yml
-name: Docker build and push to Artifact Registry
-
-on:
-  push:
-    branches:
-      - deployment
-
-env:
-  PROJECT_ID: ${{ secrets.PROJECT_ID }}
-  GAR_LOCATION: ${{ secrets.GAR_LOCATION }}
-  REPOSITORY: ${{ secrets.DOCKER_REPOSITORY }}
-  DOCKER_DIRS: ['webservice', 'evidently_service', 'prometheus', 'grafana']
-  IMAGES: ['ml-service', 'evidently_service', 'prometheus', 'grafana']
-
-jobs:
-  login-build-push:
-    name: Docker login, build, and push
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-
-    - id: auth
-      name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@v1
-      with:
-        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-        token_format: access_token
-
-    - name: Docker login
-      uses: docker/login-action@v1
-      with:
-        registry: ${{ env.GAR_LOCATION }}-docker.pkg.dev
-        username: oauth2accesstoken
-        password: ${{ steps.auth.outputs.access_token }}
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Docker build and push
-      run: |
-        for i in ${!DOCKER_DIRS[@]}; do
-          docker buildx build --no-cache --platform linux/amd64 --push \
-            --tag "$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/${IMAGES[i]}:latest" \
-            ${DOCKER_DIRS[i]}/
-        done
-```
-
+Note: the service account requires the role AccessTokenCreator 
