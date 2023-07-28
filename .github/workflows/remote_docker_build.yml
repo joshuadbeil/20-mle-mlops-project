@@ -1,7 +1,7 @@
 name: Docker build and push to Artifact Registry
 
 on:
-  push:
+  pull_request:
     branches:
       - deployment
 
