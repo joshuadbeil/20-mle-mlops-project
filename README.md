@@ -26,7 +26,7 @@ Evidently:  http://localhost:8085
 
 ## Deployment
 
-- rirewall rule for services with the network tag ```monitoring```
+- firewall rule for services with the network tag ```monitoring```
 ```bash
 gcloud compute firewall-rules create allow-monitoring --target-tags monitoring --allow tcp:8080,tcp:9090,tcp:3000
 ```
@@ -47,19 +47,19 @@ export PROJECT_ID=<project id>
 ### local:
 - build Docker images and push them to the artifact registry:
 ```bash
-docker buildx build --no-cache --platform linux/amd64 --push -t europe-west3-docker.pkg.dev/$PROJECT_ID/docker-registry/ml-service:latest .
+docker buildx build --no-cache --platform linux/amd64 --push -t europe-west3-docker.pkg.dev/$PROJECT_ID/docker-registry/ml-service:latest ./webservice/
 ```
 
 ```bash
-docker buildx build --no-cache --platform linux/amd64 --push -t europe-west3-docker.pkg.dev/$PROJECT_ID/docker-registry/prometheus:latest .
+docker buildx build --no-cache --platform linux/amd64 --push -t europe-west3-docker.pkg.dev/$PROJECT_ID/docker-registry/prometheus:latest ./prometheus/
  ```
 
 ```bash
-docker buildx build --no-cache --platform linux/amd64 --push -t europe-west3-docker.pkg.dev/$PROJECT_ID/docker-registry/grafana:latest .
+docker buildx build --no-cache --platform linux/amd64 --push -t europe-west3-docker.pkg.dev/$PROJECT_ID/docker-registry/grafana:latest ./grafana/
 ```
 
 ```bash
-docker buildx build --no-cache --platform linux/amd64 --push -t europe-west3-docker.pkg.dev/$PROJECT_ID/docker-registry/evidently_service:latest .
+docker buildx build --no-cache --platform linux/amd64 --push -t europe-west3-docker.pkg.dev/$PROJECT_ID/docker-registry/evidently_service:latest ./evidently_service/
 ```
 
 ### remote:
@@ -114,7 +114,7 @@ sudo docker run -d -p 8085:8085 --name=evidently_service --network=monitoring eu
 ```
 
 ## Building the Docker images with a GH action
-
+- Only the service image
 ```yml
 name: Docker build and push to Artifact Registry
 
@@ -124,9 +124,6 @@ on:
       - deployment
 
 env:
-  PROJECT_ID: ${{ secrets.PROJECT_ID }}
-  GAR_LOCATION: ${{ secrets.GAR_LOCATION }}
-  REPOSITORY: ${{ secrets.DOCKER_REPOSITORY }}
   IMAGE: ml-service
   DOCKER_DIR: webservice
 
@@ -147,9 +144,9 @@ jobs:
         token_format: access_token
 
     - name: Docker login
-      uses: docker/login-action@v1
+      uses: docker/login-action@v2
       with:
-        registry: ${{ env.GAR_LOCATION }}-docker.pkg.dev
+        registry: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev
         username: oauth2accesstoken
         password: ${{ steps.auth.outputs.access_token }}
 
@@ -157,8 +154,69 @@ jobs:
       uses: docker/setup-buildx-action@v2
 
     - name: Docker build and push
-      run: |
-        docker buildx build --no-cache --platform linux/amd64 --push \
-          --tag "$GAR_LOCATION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$IMAGE:latest" \
-          $DOCKER_DIR/
+      uses: docker/build-push-action@v2
+      with:
+        context: ${{ env.DOCKER_DIR }}
+        push: true
+        tags: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/${{ env.IMAGE }}:latest
+        platforms: linux/amd64
+        no-cache: true
 ```
+- All images
+
+```yml
+name: Docker build and push to Artifact Registry
+
+on:
+  push:
+    branches:
+      - deployment
+
+jobs:
+  login-build-push:
+    name: Docker login, build, and push
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - context: "webservice"
+            image: "ml-service"
+          - context: "evidently_service"
+            image: "evidently_service"
+          - context: "prometheus"
+            image: "prometheus"
+          - context: "grafana"
+            image: "grafana"
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - id: auth
+      name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+        token_format: access_token
+
+    - name: Docker login
+      uses: docker/login-action@v2
+      with:
+        registry: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev
+        username: oauth2accesstoken
+        password: ${{ steps.auth.outputs.access_token }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: ./${{ matrix.context }}
+        push: true
+        tags: ${{ secrets.GAR_LOCATION }}-docker.pkg.dev/${{ secrets.PROJECT_ID }}/${{ secrets.REPOSITORY }}/${{ matrix.image }}:latest
+        no-cache: true
+        platforms: linux/amd64
+```
+
+Note: the service account requires the role AccessTokenCreator 

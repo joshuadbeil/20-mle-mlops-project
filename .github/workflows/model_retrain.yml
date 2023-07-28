@@ -3,6 +3,7 @@ on:
     pull_request:
         branches: 
             - main
+            - deployment
 jobs:
   train-and-report:
     runs-on: ubuntu-latest
