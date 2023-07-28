@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # COPY . /app/
 
 # MLFLOW Server
-ENV MLFLOW_TRACKING_URI="http://34.159.7.88:5000"
+ENV MLFLOW_TRACKING_URI="http://10.156.0.2:5000"
 
 # Expose the port
 EXPOSE 8080
